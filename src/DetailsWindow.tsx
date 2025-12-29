@@ -1,3 +1,4 @@
+import "@/App.css"
 import { cn } from "@/lib/utils"
 import type { ComponentProps } from "react"
 import { useState, useEffect } from "react"
@@ -14,7 +15,7 @@ import {
 } from "@/components/ui/select"
 import { animeApi, type AnimeWithId } from "@/api/anime"
 import { AnimeStatus } from "@/model/AnimeStatus"
-import { getCurrentWindow } from "@tauri-apps/api/window"
+import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow"
 
 interface DetailsWindowProps extends ComponentProps<"div"> {
     animeId?: string
@@ -33,9 +34,18 @@ export const DetailsWindow = ({ className, animeId, ...props }: DetailsWindowPro
 
     useEffect(() => {
         const loadAnime = async () => {
-            if (animeId) {
+            // Проверяем localStorage на наличие ID для редактирования
+            const storedId = window.localStorage.getItem('editAnimeId')
+            const idToLoad = animeId || storedId
+
+            if (idToLoad) {
+                // Очищаем localStorage после получения ID
+                if (storedId) {
+                    window.localStorage.removeItem('editAnimeId')
+                }
+
                 try {
-                    const anime = await animeApi.get(animeId)
+                    const anime = await animeApi.get(idToLoad)
                     if (anime) {
                         setEditingAnime(anime)
                         setName(anime.name)
@@ -78,7 +88,7 @@ export const DetailsWindow = ({ className, animeId, ...props }: DetailsWindowPro
                 await animeApi.create(name, scoreValue, review, link, status)
             }
 
-            const currentWindow = getCurrentWindow()
+            const currentWindow = getCurrentWebviewWindow()
             await currentWindow.close()
         } catch (error) {
             console.error("Ошибка сохранения:", error)
@@ -89,7 +99,7 @@ export const DetailsWindow = ({ className, animeId, ...props }: DetailsWindowPro
     }
 
     const handleCancel = async () => {
-        const currentWindow = getCurrentWindow()
+        const currentWindow = getCurrentWebviewWindow()
         await currentWindow.close()
     }
 
