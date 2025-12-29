@@ -12,9 +12,18 @@
   "app": {
     "windows": [
       {
+        "label": "main",
         "title": "anime-list",
         "width": 800,
         "height": 600
+      },
+      {
+        "label": "details",
+        "title": "Детали аниме",
+        "width": 600,
+        "height": 400,
+        "visible": false,
+        "center": true
       }
     ],
     "security": {
