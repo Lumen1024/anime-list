@@ -27,7 +27,7 @@ fn open_details_window(app: tauri::AppHandle, anime_id: Option<String>) -> Resul
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     println!("Starting Anime List application...");
-    
+
     let db = AnimeDb::new().expect("Failed to initialize database");
     println!("Database initialized successfully");
 
@@ -53,9 +53,8 @@ pub fn run() {
                         window.hide().unwrap();
                         api.prevent_close();
                     } else if window.label() == "main" {
-                        if let Some(details) = window.app_handle().get_webview_window("details") {
-                            let _ = details.close();
-                        }
+                        let app_handle = window.app_handle();
+                        app_handle.exit(0);
                     }
                 }
                 _ => {}
