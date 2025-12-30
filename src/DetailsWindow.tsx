@@ -15,14 +15,8 @@ import {
     FormLabel,
     FormMessage,
 } from "@/components/ui/form"
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select"
 import { ScoreSelect } from "@/components/ScoreSelect"
+import { AnimeStatusSelect } from "@/components/AnimeStatusSelect"
 
 interface DetailsWindowProps extends ComponentProps<"div"> {
     animeId?: string
@@ -88,22 +82,12 @@ export const DetailsWindow = ({ className, animeId, ...props }: DetailsWindowPro
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Статус</FormLabel>
-                                    <Select
-                                        onValueChange={(value) => field.onChange(Number(value))}
-                                        value={String(field.value)}
-                                    >
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Выберите статус" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            <SelectItem value={String(AnimeStatus.None)}>Нет</SelectItem>
-                                            <SelectItem value={String(AnimeStatus.Waiting)}>Ожидание</SelectItem>
-                                            <SelectItem value={String(AnimeStatus.Completed)}>Завершено</SelectItem>
-                                            <SelectItem value={String(AnimeStatus.Dropped)}>Брошено</SelectItem>
-                                        </SelectContent>
-                                    </Select>
+                                    <FormControl>
+                                        <AnimeStatusSelect
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                        />
+                                    </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
