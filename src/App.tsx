@@ -4,28 +4,50 @@ import { SearchBar } from "@/components/SearchBar";
 import { Filter, Plus } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
 import { animeApi, type AnimeWithId } from "@/api/anime";
-import { useState, useEffect, useMemo, useOptimistic } from "react";
+import {
+    useState,
+    useEffect,
+    useMemo,
+    useOptimistic,
+    useCallback,
+} from "react";
 import { Button } from "@/components/ui/button";
+
+type OptimisticAction =
+    | { type: "delete"; id: string }
+    | { type: "update"; anime: AnimeWithId };
 
 function App() {
     const [animes, setAnimes] = useState<AnimeWithId[]>([]);
-    const [searchQuery, setSearchQuery] = useState("");
+    const [query, setQuery] = useState("");
     const [isLoading, setIsLoading] = useState(true);
 
     const [optimisticAnimes, updateOptimisticAnimes] = useOptimistic(
         animes,
-        (state, newAnime) => [...state]
+        (state, action: OptimisticAction) => {
+            if (action.type === "delete") {
+                return state.filter((anime) => anime.id !== action.id);
+            }
+            if (action.type === "update") {
+                const index = state.findIndex((a) => a.id === action.anime.id);
+                if (index === -1) return [...state, action.anime];
+                const newState = [...state];
+                newState[index] = action.anime;
+                return newState;
+            }
+            return state;
+        }
     );
 
     const filteredAnimes = useMemo(
         () =>
-            animes.filter((anime) =>
-                anime.name.toLowerCase().includes(searchQuery.toLowerCase())
+            optimisticAnimes.filter((anime) =>
+                anime.name.toLowerCase().includes(query.toLowerCase())
             ),
-        [animes, searchQuery]
+        [optimisticAnimes, query]
     );
 
-    const loadAnimes = async () => {
+    const loadAnimes = useCallback(async () => {
         try {
             setIsLoading(true);
             const data = await animeApi.list();
@@ -35,34 +57,52 @@ function App() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
 
     useEffect(() => {
         loadAnimes();
-    }, []);
+    }, [loadAnimes]);
 
-    const handleOpenDetails = async (animeId?: string) => {
-        try {
-            await invoke("open_details_window", { animeId });
-            // Перезагружаем список после закрытия окна
-            setTimeout(() => loadAnimes(), 500);
-        } catch (error) {
-            console.error("Ошибка при открытии окна Details:", error);
-        }
-    };
+    const onAddClicked = useCallback(
+        async (animeId?: string) => {
+            try {
+                await invoke("open_details_window", { animeId });
+                setTimeout(() => loadAnimes(), 500);
+            } catch (error) {
+                console.error("Ошибка при открытии окна Details:", error);
+            }
+        },
+        [loadAnimes]
+    );
 
-    const handleEditAnime = async (id: string) => {
-        await handleOpenDetails(id);
-    };
+    const onAnimeClick = useCallback(
+        async (id: string) => {
+            await onAddClicked(id);
+        },
+        [onAddClicked]
+    );
 
-    const handleDeleteAnime = async (id: string) => {
-        try {
-            await animeApi.delete(id);
-            await loadAnimes();
-        } catch (error) {
-            console.error("Ошибка удаления аниме:", error);
-        }
-    };
+    const onDeleteClicked = useCallback(
+        async (id: string) => {
+            updateOptimisticAnimes({ type: "delete", id });
+
+            try {
+                await animeApi.delete(id);
+                setAnimes((prev) => prev.filter((anime) => anime.id !== id));
+            } catch (error) {
+                console.error("Ошибка удаления аниме:", error);
+                await loadAnimes();
+            }
+        },
+        [loadAnimes]
+    );
+
+    const onSearchChanged = useCallback(
+        (e: React.ChangeEvent<HTMLInputElement>) => {
+            setQuery(e.target.value);
+        },
+        []
+    );
 
     return (
         <div className="flex flex-col w-screen h-screen p-4 gap-4">
@@ -70,8 +110,8 @@ function App() {
                 <SearchBar
                     className="flex-1"
                     placeholder="Поиск аниме..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    value={query}
+                    onChange={onSearchChanged}
                 />
                 <Button size={"icon"} variant={"outline"}>
                     <Filter className="text-muted-foreground" />
@@ -79,7 +119,7 @@ function App() {
                 <Button
                     size={"icon"}
                     variant={"outline"}
-                    onClick={() => handleOpenDetails()}
+                    onClick={() => onAddClicked()}
                     title="Добавить аниме"
                 >
                     <Plus className="text-muted-foreground" />
@@ -92,7 +132,7 @@ function App() {
                     </div>
                 ) : filteredAnimes.length === 0 ? (
                     <div className="text-center text-muted-foreground py-8">
-                        {searchQuery
+                        {query
                             ? "Ничего не найдено"
                             : "Список пуст. Добавьте аниме!"}
                     </div>
@@ -101,8 +141,8 @@ function App() {
                         <AnimeListItem
                             key={anime.id}
                             anime={anime}
-                            onEdit={handleEditAnime}
-                            onDelete={handleDeleteAnime}
+                            onEdit={onAnimeClick}
+                            onDelete={onDeleteClicked}
                         />
                     ))
                 )}
