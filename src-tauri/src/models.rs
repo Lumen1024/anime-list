@@ -33,3 +33,11 @@ impl Anime {
         }
     }
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AnimeImage {
+    pub link: String,
+    pub image_data: Vec<u8>,
+    pub content_type: String,
+}

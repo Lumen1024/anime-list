@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/form";
 import { ScoreSelect } from "@/components/ScoreSelect";
 import { AnimeStatusSelect } from "@/components/AnimeStatusSelect";
+import { AnimeImage } from "@/components/AnimeImage";
 
 interface DetailsWindowProps extends ComponentProps<"div"> {
     animeId?: string;
@@ -258,9 +259,11 @@ export const DetailsWindow = ({
                 </Form>
             </div>
 
-            <div className="flex-1 bg-muted rounded-md flex items-center justify-center text-muted-foreground">
-                Изображение (в разработке)
-            </div>
+            <AnimeImage
+                animeId={animeId}
+                link={!animeId ? form.watch("link") : undefined}
+                className="flex-1"
+            />
         </div>
     );
 };

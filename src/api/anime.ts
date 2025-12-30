@@ -1,5 +1,6 @@
 import { invoke } from "@tauri-apps/api/core"
 import type { Anime } from "@/model/Anime"
+import type { AnimeImage } from "@/model/AnimeImage"
 import { AnimeStatus } from "@/model/AnimeStatus"
 
 export interface AnimeWithId extends Anime {
@@ -80,5 +81,13 @@ export const animeApi = {
 
     async list(): Promise<AnimeWithId[]> {
         return await invoke<AnimeWithId[]>("list_anime")
+    },
+
+    async getImage(id: string): Promise<AnimeImage> {
+        return await invoke<AnimeImage>("get_anime_image", { id })
+    },
+
+    async getImageByLink(link: string): Promise<AnimeImage> {
+        return await invoke<AnimeImage>("get_image_by_link", { link })
     },
 }

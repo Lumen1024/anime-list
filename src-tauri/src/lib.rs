@@ -1,6 +1,7 @@
 mod commands;
 mod db;
 mod models;
+mod scraper;
 
 use commands::AppState;
 use db::AnimeDb;
@@ -47,7 +48,9 @@ pub fn run() {
             commands::get_anime,
             commands::update_anime,
             commands::delete_anime,
-            commands::list_anime
+            commands::list_anime,
+            commands::get_anime_image,
+            commands::get_image_by_link
         ])
         .on_window_event(|window, event| {
             use tauri::Manager;
