@@ -69,27 +69,34 @@ function App() {
 
     useEffect(() => {
         const setupListener = async () => {
-            const unlisten = await listen<string>("anime-updated", async (event) => {
-                console.log("Anime updated event received");
+            const unlisten = await listen<string>(
+                "anime-updated",
+                async (event) => {
+                    console.log("Anime updated event received");
 
-                if (event.payload) {
-                    const updatedAnime = await animeApi.get(event.payload);
-                    if (updatedAnime) {
-                        setAnimes((prev) => {
-                            const exists = prev.some((a) => a.id === updatedAnime.id);
-                            if (exists) {
-                                return prev.map((a) =>
-                                    a.id === updatedAnime.id ? updatedAnime : a
+                    if (event.payload) {
+                        const updatedAnime = await animeApi.get(event.payload);
+                        if (updatedAnime) {
+                            setAnimes((prev) => {
+                                const exists = prev.some(
+                                    (a) => a.id === updatedAnime.id
                                 );
-                            } else {
-                                return [...prev, updatedAnime];
-                            }
-                        });
+                                if (exists) {
+                                    return prev.map((a) =>
+                                        a.id === updatedAnime.id
+                                            ? updatedAnime
+                                            : a
+                                    );
+                                } else {
+                                    return [...prev, updatedAnime];
+                                }
+                            });
+                        }
+                    } else {
+                        await loadAnimes();
                     }
-                } else {
-                    await loadAnimes();
                 }
-            });
+            );
 
             return unlisten;
         };
@@ -101,16 +108,14 @@ function App() {
         };
     }, [loadAnimes]);
 
-    const onAddClicked = useCallback(
-        async (animeId?: string) => {
-            try {
-                await invoke("open_details_window", { animeId });
-            } catch (error) {
-                console.error("Ошибка при открытии окна Details:", error);
-            }
-        },
-        []
-    );
+    const onAddClicked = useCallback(async (animeId?: string) => {
+        try {
+            console.log("onAddClicked called with animeId:", animeId);
+            await invoke("show_details_window", { animeId });
+        } catch (error) {
+            console.error("Ошибка при открытии окна Details:", error);
+        }
+    }, []);
 
     const onAnimeClick = useCallback(
         async (id: string) => {

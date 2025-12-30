@@ -7,19 +7,24 @@ use db::AnimeDb;
 use std::sync::Mutex;
 
 #[tauri::command]
-fn open_details_window(app: tauri::AppHandle, anime_id: Option<String>) -> Result<(), String> {
+fn show_details_window(app: tauri::AppHandle, anime_id: Option<String>) -> Result<(), String> {
     use tauri::{Emitter, Manager};
+
+    println!("show_details_window called with anime_id: {:?}", anime_id);
 
     let window = app
         .get_webview_window("details")
         .ok_or("Details window not found")?;
 
-    if let Some(id) = anime_id {
-        window.emit("anime_id", id).map_err(|e| e.to_string())?;
-    }
-
     window.show().map_err(|e| e.to_string())?;
     window.set_focus().map_err(|e| e.to_string())?;
+
+    let id_to_emit = anime_id.unwrap_or_default();
+    println!("Emitting anime_id: '{}'", id_to_emit);
+
+    window
+        .emit("anime_id", id_to_emit)
+        .map_err(|e| e.to_string())?;
 
     Ok(())
 }
@@ -37,7 +42,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .manage(app_state)
         .invoke_handler(tauri::generate_handler![
-            open_details_window,
+            show_details_window,
             commands::create_anime,
             commands::get_anime,
             commands::update_anime,
