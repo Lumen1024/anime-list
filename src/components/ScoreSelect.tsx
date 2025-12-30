@@ -25,7 +25,7 @@ export const ScoreSelect = ({
                     className={cn(
                         "w-6 h-6 transition-colors",
                         score <= value
-                            ? "fill-primary text-primary"
+                            ? "fill-chart-2 text-chart-2"
                             : "text-ring"
                     )}
                     onClick={() => handleClick(score)}
