@@ -3,6 +3,7 @@ import { AnimeListItem } from "@/components/AnimeListItem";
 import { SearchBar } from "@/components/SearchBar";
 import { Filter, Plus } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import { animeApi, type AnimeWithId } from "@/api/anime";
 import {
     useState,
@@ -66,16 +67,49 @@ function App() {
         loadAnimes();
     }, [loadAnimes]);
 
+    useEffect(() => {
+        const setupListener = async () => {
+            const unlisten = await listen<string>("anime-updated", async (event) => {
+                console.log("Anime updated event received");
+
+                if (event.payload) {
+                    const updatedAnime = await animeApi.get(event.payload);
+                    if (updatedAnime) {
+                        setAnimes((prev) => {
+                            const exists = prev.some((a) => a.id === updatedAnime.id);
+                            if (exists) {
+                                return prev.map((a) =>
+                                    a.id === updatedAnime.id ? updatedAnime : a
+                                );
+                            } else {
+                                return [...prev, updatedAnime];
+                            }
+                        });
+                    }
+                } else {
+                    await loadAnimes();
+                }
+            });
+
+            return unlisten;
+        };
+
+        const unlistenPromise = setupListener();
+
+        return () => {
+            unlistenPromise.then((unlisten) => unlisten());
+        };
+    }, [loadAnimes]);
+
     const onAddClicked = useCallback(
         async (animeId?: string) => {
             try {
                 await invoke("open_details_window", { animeId });
-                setTimeout(() => loadAnimes(), 500);
             } catch (error) {
                 console.error("Ошибка при открытии окна Details:", error);
             }
         },
-        [loadAnimes]
+        []
     );
 
     const onAnimeClick = useCallback(
@@ -186,7 +220,7 @@ function App() {
                         <AnimeListItem
                             key={anime.id}
                             anime={anime}
-                            onEdit={onAnimeClick}
+                            onItemClick={onAnimeClick}
                             onDelete={onDeleteClicked}
                             onScoreChange={onScoreChanged}
                             onStatusChange={onStatusChanged}
