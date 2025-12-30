@@ -2,12 +2,12 @@ import "@/App.css";
 import { cn } from "@/lib/utils";
 import { useForm } from "react-hook-form";
 import type { ComponentProps } from "react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { animeApi, type AnimeWithId } from "@/api/anime";
 import type { Anime } from "@/model/Anime";
 import { AnimeStatus } from "@/model/AnimeStatus";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { emit } from "@tauri-apps/api/event";
+import { emit, listen } from "@tauri-apps/api/event";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -28,9 +28,11 @@ interface DetailsWindowProps extends ComponentProps<"div"> {
 
 export const DetailsWindow = ({
     className,
-    animeId,
+    animeId: initialAnimeId,
     ...props
 }: DetailsWindowProps) => {
+    const [animeId, setAnimeId] = useState<string | undefined>(initialAnimeId);
+
     const form = useForm<Anime>({
         defaultValues: {
             name: "",
@@ -42,25 +44,51 @@ export const DetailsWindow = ({
     });
 
     useEffect(() => {
-        const loadAnimeData = async () => {
-            if (animeId) {
-                try {
-                    const animeData = await animeApi.get(animeId);
-                    if (animeData) {
-                        // Преобразуем AnimeWithId в Anime для формы
-                        const { id, ...animeWithoutId } = animeData;
-                        form.reset(animeWithoutId);
+        console.log("Setting up anime_id listener in DetailsWindow");
+        const setupListener = async () => {
+            const unlisten = await listen<string>("anime_id", async (event) => {
+                console.log("Received anime_id event:", event);
+                console.log("Event payload:", event.payload);
+                console.log("Event payload type:", typeof event.payload);
+                const id = event.payload?.trim();
+                console.log("Trimmed id:", id);
+
+                if (id && id.length > 0) {
+                    console.log("Loading anime with id:", id);
+                    try {
+                        const animeData = await animeApi.get(id);
+                        console.log("Loaded anime data:", animeData);
+                        if (animeData) {
+                            const { id: _, ...animeWithoutId } = animeData;
+                            form.reset(animeWithoutId);
+                            setAnimeId(id);
+                            console.log("Form reset with anime data");
+                        }
+                    } catch (error) {
+                        console.error("Ошибка при загрузке аниме:", error);
+                        alert("Не удалось загрузить данные аниме");
                     }
-                } catch (error) {
-                    console.error("Ошибка при загрузке аниме:", error);
-                    // Можно показать ошибку пользователю
-                    alert("Не удалось загрузить данные аниме");
+                } else {
+                    console.log("Empty id, resetting form to create mode");
+                    form.reset({
+                        name: "",
+                        score: 0,
+                        review: "",
+                        link: "",
+                        status: AnimeStatus.None,
+                    });
+                    setAnimeId(undefined);
                 }
-            }
+            });
+            return unlisten;
         };
 
-        loadAnimeData();
-    }, [animeId, form]);
+        const unlistenPromise = setupListener();
+
+        return () => {
+            unlistenPromise.then((unlisten) => unlisten());
+        };
+    }, [form]);
 
     const onSubmit = async (data: Anime) => {
         try {
@@ -78,6 +106,7 @@ export const DetailsWindow = ({
                 console.log("Update successful:", updated);
 
                 await emit("anime-updated", updated.id);
+                setAnimeId(undefined);
                 await getCurrentWindow().hide();
             } else {
                 // Режим создания
@@ -94,14 +123,7 @@ export const DetailsWindow = ({
                 console.log("Create successful, new ID:", newAnime.id);
 
                 await emit("anime-updated", newAnime.id);
-
-                form.reset({
-                    name: "",
-                    score: 0,
-                    review: "",
-                    link: "",
-                    status: AnimeStatus.None,
-                });
+                setAnimeId(undefined);
 
                 await getCurrentWindow().hide();
             }
@@ -139,6 +161,7 @@ export const DetailsWindow = ({
                     <form
                         onSubmit={form.handleSubmit(onSubmit)}
                         className="space-y-4"
+                        autoComplete="off"
                     >
                         <FormField
                             control={form.control}
@@ -149,6 +172,7 @@ export const DetailsWindow = ({
                                     <FormControl>
                                         <Input
                                             placeholder="Введите название аниме"
+                                            autoComplete="off"
                                             {...field}
                                         />
                                     </FormControl>
@@ -200,6 +224,7 @@ export const DetailsWindow = ({
                                     <FormControl>
                                         <Input
                                             placeholder="https://..."
+                                            autoComplete="off"
                                             {...field}
                                         />
                                     </FormControl>
@@ -217,6 +242,7 @@ export const DetailsWindow = ({
                                     <FormControl>
                                         <Textarea
                                             placeholder="Напишите свой отзыв..."
+                                            autoComplete="off"
                                             {...field}
                                         />
                                     </FormControl>
