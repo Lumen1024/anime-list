@@ -73,10 +73,12 @@ export const AnimeListItem = ({
                 >
                     <div className="flex flex-row gap-2 items-center flex-1 min-w-0">
                         {isStatusSelectOpen ? (
-                            <AnimeStatusSelect
-                                value={anime.status}
-                                onChange={handleStatusChange}
-                            />
+                            <div onClick={(e) => e.stopPropagation()}>
+                                <AnimeStatusSelect
+                                    value={anime.status}
+                                    onChange={handleStatusChange}
+                                />
+                            </div>
                         ) : (
                             <Button
                                 size={"icon"}
@@ -93,8 +95,9 @@ export const AnimeListItem = ({
                     </div>
 
                     <div
-                        className="flex items-center gap-2"
+                        className="flex items-center gap-2 select-none"
                         onClick={(e) => e.stopPropagation()}
+                        onDoubleClick={(e) => e.preventDefault()}
                     >
                         <ScoreSelect
                             value={anime.score}
