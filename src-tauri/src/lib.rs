@@ -26,7 +26,11 @@ fn open_details_window(app: tauri::AppHandle, anime_id: Option<String>) -> Resul
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    println!("Starting Anime List application...");
+    
     let db = AnimeDb::new().expect("Failed to initialize database");
+    println!("Database initialized successfully");
+
     let app_state = AppState { db: Mutex::new(db) };
 
     tauri::Builder::default()
@@ -56,6 +60,10 @@ pub fn run() {
                 }
                 _ => {}
             }
+        })
+        .setup(|app| {
+            println!("Tauri app setup complete");
+            Ok(())
         })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

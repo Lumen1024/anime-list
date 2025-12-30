@@ -16,6 +16,8 @@ pub fn create_anime(
     link: String,
     status: AnimeStatus,
 ) -> Result<Anime, String> {
+    println!("Creating anime: {}, score: {}", name, score);
+
     let db = state.db.lock().map_err(|e| e.to_string())?;
     let anime = Anime::new(name, score, review, link, status);
     db.create(anime)
