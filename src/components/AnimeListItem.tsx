@@ -5,7 +5,7 @@ import type { AnimeWithId } from "@/api/anime";
 import type { AnimeStatus } from "@/model/AnimeStatus";
 import { cn } from "@/lib/utils";
 import type { ComponentProps } from "react";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import {
     ContextMenu,
     ContextMenuContent,
@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 
 interface AnimeListItemProps extends ComponentProps<"div"> {
     anime: AnimeWithId;
-    onEdit?: (id: string) => void;
+    onItemClick?: (id: string) => void;
     onDelete?: (id: string) => void;
     onScoreChange?: (id: string, score: number) => void;
     onStatusChange?: (id: string, status: AnimeStatus) => void;
@@ -25,7 +25,7 @@ interface AnimeListItemProps extends ComponentProps<"div"> {
 
 export const AnimeListItem = ({
     anime,
-    onEdit,
+    onItemClick,
     onDelete,
     onScoreChange,
     onStatusChange,
@@ -34,27 +34,41 @@ export const AnimeListItem = ({
 }: AnimeListItemProps) => {
     const [isStatusSelectOpen, setIsStatusSelectOpen] = useState(false);
 
-    const handleStatusChange = (status: AnimeStatus) => {
-        if (onStatusChange) {
-            onStatusChange(anime.id, status);
-        }
-        setIsStatusSelectOpen(false);
-    };
+    const handleStatusChange = useCallback(
+        (status: AnimeStatus) => {
+            if (onStatusChange) {
+                onStatusChange(anime.id, status);
+            }
+            setIsStatusSelectOpen(false);
+        },
+        [anime.id, onStatusChange]
+    );
 
-    const handleScoreChange = (score: number) => {
-        if (onScoreChange) {
-            onScoreChange(anime.id, score);
+    const handleScoreChange = useCallback(
+        (score: number) => {
+            if (onScoreChange) {
+                const newScore = anime.score === score ? 0 : score;
+                onScoreChange(anime.id, newScore);
+            }
+        },
+        [anime.id, anime.score, onScoreChange]
+    );
+
+    const handleClick = useCallback(() => {
+        if (onItemClick) {
+            onItemClick(anime.id);
         }
-    };
+    }, [anime.id, onItemClick]);
 
     return (
         <ContextMenu>
             <ContextMenuTrigger asChild>
                 <div
                     className={cn(
-                        "p-2 h-10 flex items-center justify-between rounded bg-accent transition-colors gap-2",
+                        "p-2 h-10 flex items-center justify-between rounded bg-accent transition-colors gap-2 cursor-pointer",
                         className
                     )}
+                    onClick={handleClick}
                     {...props}
                 >
                     <div className="flex flex-row gap-2 items-center flex-1 min-w-0">
@@ -67,17 +81,21 @@ export const AnimeListItem = ({
                             <Button
                                 size={"icon"}
                                 variant={"ghost"}
-                                onClick={() => setIsStatusSelectOpen(true)}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setIsStatusSelectOpen(true);
+                                }}
                             >
                                 <AnimeStatusIcon status={anime.status} />
                             </Button>
                         )}
-                        <div onClick={() => onEdit?.(anime.id)}>
-                            {anime.name}
-                        </div>
+                        <div className="truncate">{anime.name}</div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div
+                        className="flex items-center gap-2"
+                        onClick={(e) => e.stopPropagation()}
+                    >
                         <ScoreSelect
                             value={anime.score}
                             onChange={handleScoreChange}

@@ -6,6 +6,8 @@ import { useEffect } from "react";
 import { animeApi, type AnimeWithId } from "@/api/anime";
 import type { Anime } from "@/model/Anime";
 import { AnimeStatus } from "@/model/AnimeStatus";
+import { getCurrentWindow } from "@tauri-apps/api/window";
+import { emit } from "@tauri-apps/api/event";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -75,7 +77,8 @@ export const DetailsWindow = ({
                 const updated = await animeApi.update(animeWithId);
                 console.log("Update successful:", updated);
 
-                alert("Аниме успешно обновлено!");
+                await emit("anime-updated", updated.id);
+                await getCurrentWindow().hide();
             } else {
                 // Режим создания
                 console.log("Creating new anime with data:", data);
@@ -90,9 +93,8 @@ export const DetailsWindow = ({
 
                 console.log("Create successful, new ID:", newAnime.id);
 
-                alert("Аниме успешно добавлено!");
+                await emit("anime-updated", newAnime.id);
 
-                // Очистить форму после успешного создания
                 form.reset({
                     name: "",
                     score: 0,
@@ -100,6 +102,8 @@ export const DetailsWindow = ({
                     link: "",
                     status: AnimeStatus.None,
                 });
+
+                await getCurrentWindow().hide();
             }
         } catch (error) {
             console.error("Ошибка при сохранении аниме:", error);
