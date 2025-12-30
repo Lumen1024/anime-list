@@ -12,10 +12,13 @@ import {
     useCallback,
 } from "react";
 import { Button } from "@/components/ui/button";
+import { Anime } from "@/model/Anime";
+import type { AnimeStatus } from "@/model/AnimeStatus";
 
 type OptimisticAction =
     | { type: "delete"; id: string }
-    | { type: "update"; anime: AnimeWithId };
+    | { type: "update"; anime: AnimeWithId }
+    | { type: "add"; anime: Anime };
 
 function App() {
     const [animes, setAnimes] = useState<AnimeWithId[]>([]);
@@ -104,6 +107,48 @@ function App() {
         []
     );
 
+    const onScoreChanged = useCallback(
+        async (id: string, score: number) => {
+            const anime = animes.find((a) => a.id === id);
+            if (!anime) return;
+
+            const updatedAnime = { ...anime, score };
+            updateOptimisticAnimes({ type: "update", anime: updatedAnime });
+
+            try {
+                const result = await animeApi.update(updatedAnime);
+                setAnimes((prev) =>
+                    prev.map((a) => (a.id === id ? result : a))
+                );
+            } catch (error) {
+                console.error("Ошибка обновления оценки:", error);
+                await loadAnimes();
+            }
+        },
+        [animes, loadAnimes]
+    );
+
+    const onStatusChanged = useCallback(
+        async (id: string, status: AnimeStatus) => {
+            const anime = animes.find((a) => a.id === id);
+            if (!anime) return;
+
+            const updatedAnime = { ...anime, status };
+            updateOptimisticAnimes({ type: "update", anime: updatedAnime });
+
+            try {
+                const result = await animeApi.update(updatedAnime);
+                setAnimes((prev) =>
+                    prev.map((a) => (a.id === id ? result : a))
+                );
+            } catch (error) {
+                console.error("Ошибка обновления статуса:", error);
+                await loadAnimes();
+            }
+        },
+        [animes, loadAnimes]
+    );
+
     return (
         <div className="flex flex-col w-screen h-screen p-4 gap-4">
             <div className="flex w-full gap-2">
@@ -143,6 +188,8 @@ function App() {
                             anime={anime}
                             onEdit={onAnimeClick}
                             onDelete={onDeleteClicked}
+                            onScoreChange={onScoreChanged}
+                            onStatusChange={onStatusChanged}
                         />
                     ))
                 )}
