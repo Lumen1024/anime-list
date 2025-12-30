@@ -1,7 +1,8 @@
 import "@/App.css";
 import { AnimeListItem } from "@/components/AnimeListItem";
 import { SearchBar } from "@/components/SearchBar";
-import { Filter, Plus } from "lucide-react";
+import { FilterMenu, type FilterStatus } from "@/components/FilterMenu";
+import { Plus } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { animeApi, type AnimeWithId } from "@/api/anime";
@@ -24,6 +25,7 @@ type OptimisticAction =
 function App() {
     const [animes, setAnimes] = useState<AnimeWithId[]>([]);
     const [query, setQuery] = useState("");
+    const [filterStatus, setFilterStatus] = useState<FilterStatus>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     const [optimisticAnimes, updateOptimisticAnimes] = useOptimistic(
@@ -45,11 +47,25 @@ function App() {
 
     const filteredAnimes = useMemo(
         () =>
-            optimisticAnimes.filter((anime) =>
-                anime.name.toLowerCase().includes(query.toLowerCase())
-            ),
-        [optimisticAnimes, query]
+            optimisticAnimes.filter((anime) => {
+                const matchesQuery = anime.name.toLowerCase().includes(query.toLowerCase());
+                const matchesStatus = filterStatus.length === 0 || filterStatus.includes(anime.status);
+                return matchesQuery && matchesStatus;
+            }),
+        [optimisticAnimes, query, filterStatus]
     );
+
+    const sortedAnimes = useMemo(() => {
+        const arr = [...filteredAnimes];
+        // Сортировка по рейтингу (убывание), затем по названию (возрастание)
+        arr.sort((a, b) => {
+            if (b.score !== a.score) {
+                return b.score - a.score;
+            }
+            return a.name.localeCompare(b.name);
+        });
+        return arr;
+    }, [filteredAnimes]);
 
     const loadAnimes = useCallback(async () => {
         try {
@@ -197,9 +213,10 @@ function App() {
                     value={query}
                     onChange={onSearchChanged}
                 />
-                <Button size={"icon"} variant={"outline"}>
-                    <Filter className="text-muted-foreground" />
-                </Button>
+                <FilterMenu
+                    value={filterStatus}
+                    onChange={setFilterStatus}
+                />
                 <Button
                     size={"icon"}
                     variant={"outline"}
@@ -214,14 +231,14 @@ function App() {
                     <div className="text-center text-muted-foreground py-8">
                         Загрузка...
                     </div>
-                ) : filteredAnimes.length === 0 ? (
+                ) : sortedAnimes.length === 0 ? (
                     <div className="text-center text-muted-foreground py-8">
                         {query
                             ? "Ничего не найдено"
                             : "Список пуст. Добавьте аниме!"}
                     </div>
                 ) : (
-                    filteredAnimes.map((anime) => (
+                    sortedAnimes.map((anime) => (
                         <AnimeListItem
                             key={anime.id}
                             anime={anime}
