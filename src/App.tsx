@@ -1,11 +1,11 @@
 import "@/App.css"
 import { AnimeListItem } from "@/components/AnimeListItem"
 import { SearchBar } from "@/components/SearchBar"
-import { Button } from "./components/ui/button"
 import { Filter, Plus } from "lucide-react"
 import { invoke } from "@tauri-apps/api/core"
 import { animeApi, type AnimeWithId } from "@/api/anime"
 import { useState, useEffect } from "react"
+import { Button } from "@/components/ui/button"
 
 function App() {
     const [animes, setAnimes] = useState<AnimeWithId[]>([])

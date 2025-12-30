@@ -1,11 +1,20 @@
 import "@/App.css"
 import { cn } from "@/lib/utils"
+import { useForm } from "react-hook-form"
 import type { ComponentProps } from "react"
-import { useState, useEffect } from "react"
+import type { Anime } from "@/model/Anime"
+import { AnimeStatus } from "@/model/AnimeStatus"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import {
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from "@/components/ui/form"
 import {
     Select,
     SelectContent,
@@ -13,198 +22,131 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
-import { animeApi, type AnimeWithId } from "@/api/anime"
-import { AnimeStatus } from "@/model/AnimeStatus"
-import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow"
+import { ScoreSelect } from "@/components/ScoreSelect"
 
 interface DetailsWindowProps extends ComponentProps<"div"> {
     animeId?: string
 }
 
 export const DetailsWindow = ({ className, animeId, ...props }: DetailsWindowProps) => {
-    const [name, setName] = useState("")
-    const [score, setScore] = useState("0")
-    const [review, setReview] = useState("")
-    const [link, setLink] = useState("")
-    const [status, setStatus] = useState<AnimeStatus>(AnimeStatus.None)
-    const [isLoading, setIsLoading] = useState(false)
-    const [editingAnime, setEditingAnime] = useState<AnimeWithId | null>(null)
+    const form = useForm<Anime>({
+        defaultValues: {
+            name: "",
+            score: 0,
+            review: "",
+            link: "",
+            status: AnimeStatus.None,
+        },
+    })
 
-    const isEditMode = !!animeId || !!editingAnime
-
-    useEffect(() => {
-        const loadAnime = async () => {
-            // Проверяем localStorage на наличие ID для редактирования
-            const storedId = window.localStorage.getItem('editAnimeId')
-            const idToLoad = animeId || storedId
-
-            if (idToLoad) {
-                // Очищаем localStorage после получения ID
-                if (storedId) {
-                    window.localStorage.removeItem('editAnimeId')
-                }
-
-                try {
-                    const anime = await animeApi.get(idToLoad)
-                    if (anime) {
-                        setEditingAnime(anime)
-                        setName(anime.name)
-                        setScore(anime.score.toString())
-                        setReview(anime.review)
-                        setLink(anime.link)
-                        setStatus(anime.status)
-                    }
-                } catch (error) {
-                    console.error("Ошибка загрузки аниме:", error)
-                }
-            }
-        }
-
-        loadAnime()
-    }, [animeId])
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault()
-        setIsLoading(true)
-
-        try {
-            const scoreValue = parseFloat(score)
-
-            if (isNaN(scoreValue) || scoreValue < 0 || scoreValue > 10) {
-                alert("Оценка должна быть числом от 0 до 10")
-                return
-            }
-
-            if (isEditMode && editingAnime) {
-                await animeApi.update({
-                    ...editingAnime,
-                    name,
-                    score: scoreValue,
-                    review,
-                    link,
-                    status,
-                })
-            } else {
-                await animeApi.create(name, scoreValue, review, link, status)
-            }
-
-            const currentWindow = getCurrentWebviewWindow()
-            await currentWindow.close()
-        } catch (error) {
-            console.error("Ошибка сохранения:", error)
-            alert("Ошибка при сохранении аниме")
-        } finally {
-            setIsLoading(false)
-        }
-    }
-
-    const handleCancel = async () => {
-        const currentWindow = getCurrentWebviewWindow()
-        await currentWindow.close()
+    const onSubmit = (data: Anime) => {
+        console.log(data)
     }
 
     return (
         <div
-            className={cn("flex flex-col w-screen h-screen p-6 gap-4", className)}
+            className={cn("flex w-screen h-screen p-4 gap-4", className)}
             {...props}
         >
-            <h1 className="text-2xl font-bold">
-                {isEditMode ? "Редактировать аниме" : "Добавить аниме"}
-            </h1>
+            <div className="flex-1">
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                        <FormField
+                            control={form.control}
+                            name="name"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Название</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="Введите название аниме" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
 
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4 flex-1">
-                <div className="flex flex-col gap-2">
-                    <Label htmlFor="name">Название</Label>
-                    <Input
-                        id="name"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        placeholder="Введите название аниме"
-                        required
-                    />
-                </div>
+                        <FormField
+                            control={form.control}
+                            name="score"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Оценка</FormLabel>
+                                    <FormControl>
+                                        <ScoreSelect
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
 
-                <div className="flex flex-col gap-2">
-                    <Label htmlFor="score">Оценка (0-10)</Label>
-                    <Input
-                        id="score"
-                        type="number"
-                        min="0"
-                        max="10"
-                        step="0.1"
-                        value={score}
-                        onChange={(e) => setScore(e.target.value)}
-                        placeholder="0.0"
-                        required
-                    />
-                </div>
+                        <FormField
+                            control={form.control}
+                            name="status"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Статус</FormLabel>
+                                    <Select
+                                        onValueChange={(value) => field.onChange(Number(value))}
+                                        value={String(field.value)}
+                                    >
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Выберите статус" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            <SelectItem value={String(AnimeStatus.None)}>Нет</SelectItem>
+                                            <SelectItem value={String(AnimeStatus.Waiting)}>Ожидание</SelectItem>
+                                            <SelectItem value={String(AnimeStatus.Completed)}>Завершено</SelectItem>
+                                            <SelectItem value={String(AnimeStatus.Dropped)}>Брошено</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
 
-                <div className="flex flex-col gap-2">
-                    <Label htmlFor="link">Ссылка</Label>
-                    <Input
-                        id="link"
-                        type="url"
-                        value={link}
-                        onChange={(e) => setLink(e.target.value)}
-                        placeholder="https://..."
-                    />
-                </div>
+                        <FormField
+                            control={form.control}
+                            name="link"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Ссылка</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="https://..." {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
 
-                <div className="flex flex-col gap-2">
-                    <Label htmlFor="status">Статус</Label>
-                    <Select
-                        value={status.toString()}
-                        onValueChange={(value) => setStatus(parseInt(value) as AnimeStatus)}
-                    >
-                        <SelectTrigger id="status">
-                            <SelectValue placeholder="Выберите статус" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value={AnimeStatus.None.toString()}>
-                                Нет статуса
-                            </SelectItem>
-                            <SelectItem value={AnimeStatus.Completed.toString()}>
-                                Завершено
-                            </SelectItem>
-                            <SelectItem value={AnimeStatus.Waiting.toString()}>
-                                В ожидании
-                            </SelectItem>
-                            <SelectItem value={AnimeStatus.Dropped.toString()}>
-                                Брошено
-                            </SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
+                        <FormField
+                            control={form.control}
+                            name="review"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Отзыв</FormLabel>
+                                    <FormControl>
+                                        <Textarea placeholder="Напишите свой отзыв..." {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
 
-                <div className="flex flex-col gap-2 flex-1">
-                    <Label htmlFor="review">Отзыв</Label>
-                    <Textarea
-                        id="review"
-                        value={review}
-                        onChange={(e) => setReview(e.target.value)}
-                        placeholder="Ваш отзыв об аниме..."
-                        className="flex-1 min-h-[120px]"
-                    />
-                </div>
+                        <Button type="submit">
+                            {animeId ? "Сохранить" : "Создать"}
+                        </Button>
+                    </form>
+                </Form>
+            </div>
 
-                <div className="flex gap-3 mt-auto">
-                    <Button
-                        type="submit"
-                        disabled={isLoading}
-                        className="flex-1"
-                    >
-                        {isLoading ? "Сохранение..." : isEditMode ? "Сохранить" : "Добавить"}
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        onClick={handleCancel}
-                        disabled={isLoading}
-                    >
-                        Отмена
-                    </Button>
-                </div>
-            </form>
+            <div className="flex-1 bg-muted rounded-md flex items-center justify-center text-muted-foreground">
+                Изображение (в разработке)
+            </div>
         </div>
     )
 }

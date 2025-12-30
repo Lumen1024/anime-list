@@ -1,4 +1,4 @@
-import { AnimeStatus } from "./AnimeStatus"
+import { AnimeStatus } from "@/model/AnimeStatus"
 
 export type Anime = {
     name: string
