@@ -13,6 +13,7 @@ import {
     ContextMenuTrigger,
 } from "@/components/ui/context-menu"
 import { Trash2 } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 interface AnimeListItemProps extends ComponentProps<"div"> {
     anime: AnimeWithId
@@ -32,7 +33,6 @@ export const AnimeListItem = ({
     ...props
 }: AnimeListItemProps) => {
     const [isStatusSelectOpen, setIsStatusSelectOpen] = useState(false)
-    const [isScoreSelectOpen, setIsScoreSelectOpen] = useState(false)
 
     const handleStatusChange = (status: AnimeStatus) => {
         if (onStatusChange) {
@@ -45,7 +45,6 @@ export const AnimeListItem = ({
         if (onScoreChange) {
             onScoreChange(anime.id, score)
         }
-        setIsScoreSelectOpen(false)
     }
 
     return (
@@ -65,38 +64,25 @@ export const AnimeListItem = ({
                                 onChange={handleStatusChange}
                             />
                         ) : (
-                            <button
-                                type="button"
+                            <Button
+                                size={"icon"}
+                                variant={"ghost"}
                                 onClick={() => setIsStatusSelectOpen(true)}
-                                className="hover:bg-background/50 rounded p-1 transition-colors"
                             >
                                 <AnimeStatusIcon status={anime.status} />
-                            </button>
+                            </Button>
                         )}
-                        <button
-                            type="button"
-                            onClick={() => onEdit?.(anime.id)}
-                            className="flex-1 text-foreground truncate text-left hover:text-primary transition-colors"
-                        >
+                        <div
+                            onClick={() => onEdit?.(anime.id)}                        >
                             {anime.name}
-                        </button>
+                        </div>
                     </div>
 
                     <div className="flex items-center gap-2">
-                        {isScoreSelectOpen ? (
-                            <ScoreSelect
-                                value={anime.score}
-                                onChange={handleScoreChange}
-                            />
-                        ) : (
-                            <button
-                                type="button"
-                                onClick={() => setIsScoreSelectOpen(true)}
-                                className="hover:bg-background/50 rounded px-2 py-1 transition-colors"
-                            >
-                                <span className="text-sm">{"⭐".repeat(anime.score)}</span>
-                            </button>
-                        )}
+                        <ScoreSelect
+                            value={anime.score}
+                            onChange={handleScoreChange}
+                        />
                     </div>
                 </div>
             </ContextMenuTrigger>

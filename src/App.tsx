@@ -1,16 +1,23 @@
 import "@/App.css"
 import { AnimeListItem } from "@/components/AnimeListItem"
 import { SearchBar } from "@/components/SearchBar"
-import { Filter, Plus } from "lucide-react"
+import { Filter, Ghost, Plus } from "lucide-react"
 import { invoke } from "@tauri-apps/api/core"
-import { animeApi, type AnimeWithId } from "@/api/anime"
-import { useState, useEffect } from "react"
+import { animeApi, mockAnimeList, type AnimeWithId } from "@/api/anime"
+import { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 
 function App() {
     const [animes, setAnimes] = useState<AnimeWithId[]>([])
     const [searchQuery, setSearchQuery] = useState("")
     const [isLoading, setIsLoading] = useState(true)
+
+    const filteredAnimes = useMemo(
+        () => animes.filter((anime) =>
+            anime.name.toLowerCase().includes(searchQuery.toLowerCase())
+        ),
+        [animes, searchQuery]
+    )
 
     const loadAnimes = async () => {
         try {
@@ -51,10 +58,6 @@ function App() {
         }
     }
 
-    const filteredAnimes = animes.filter((anime) =>
-        anime.name.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-
     return (
         <div className="flex flex-col w-screen h-screen p-4 gap-4">
             <div className="flex w-full gap-2">
@@ -64,12 +67,12 @@ function App() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                 />
-                <Button size={"icon-sm"} className="bg-accent">
+                <Button size={"icon"} variant={"outline"}>
                     <Filter className="text-muted-foreground" />
                 </Button>
                 <Button
-                    size={"icon-sm"}
-                    className="bg-accent"
+                    size={"icon"}
+                    variant={"outline"}
                     onClick={() => handleOpenDetails()}
                     title="Добавить аниме"
                 >
