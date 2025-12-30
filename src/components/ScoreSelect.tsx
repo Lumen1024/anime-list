@@ -1,10 +1,10 @@
-import { cn } from "@/lib/utils"
-import { Star } from "lucide-react"
-import type { ComponentProps } from "react"
+import { cn } from "@/lib/utils";
+import { Star } from "lucide-react";
+import type { ComponentProps } from "react";
 
 interface ScoreSelectProps extends Omit<ComponentProps<"div">, "onChange"> {
-    value?: number
-    onChange?: (value: number) => void
+    value?: number;
+    onChange?: (value: number) => void;
 }
 
 export const ScoreSelect = ({
@@ -14,14 +14,11 @@ export const ScoreSelect = ({
     ...props
 }: ScoreSelectProps) => {
     const handleClick = (score: number) => {
-        if (onChange) onChange(score)
-    }
+        if (onChange) onChange(score);
+    };
 
     return (
-        <div
-            className={cn("flex gap-1", className)}
-            {...props}
-        >
+        <div className={cn("flex gap-1", className)} {...props}>
             {[1, 2, 3, 4, 5].map((score) => (
                 <Star
                     key={score}
@@ -29,11 +26,11 @@ export const ScoreSelect = ({
                         "w-6 h-6 transition-colors",
                         score <= value
                             ? "fill-primary text-primary"
-                            : "text-ring",
+                            : "text-ring"
                     )}
                     onClick={() => handleClick(score)}
                 />
             ))}
         </div>
-    )
-}
+    );
+};

@@ -1,14 +1,14 @@
-import "@/App.css"
-import { cn } from "@/lib/utils"
-import { useForm } from "react-hook-form"
-import type { ComponentProps } from "react"
-import { useEffect } from "react"
-import {animeApi, type AnimeWithId} from "@/api/anime"
-import type { Anime } from "@/model/Anime"
-import { AnimeStatus } from "@/model/AnimeStatus"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
+import "@/App.css";
+import { cn } from "@/lib/utils";
+import { useForm } from "react-hook-form";
+import type { ComponentProps } from "react";
+import { useEffect } from "react";
+import { animeApi, type AnimeWithId } from "@/api/anime";
+import type { Anime } from "@/model/Anime";
+import { AnimeStatus } from "@/model/AnimeStatus";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
     Form,
     FormControl,
@@ -16,15 +16,19 @@ import {
     FormItem,
     FormLabel,
     FormMessage,
-} from "@/components/ui/form"
-import { ScoreSelect } from "@/components/ScoreSelect"
-import { AnimeStatusSelect } from "@/components/AnimeStatusSelect"
+} from "@/components/ui/form";
+import { ScoreSelect } from "@/components/ScoreSelect";
+import { AnimeStatusSelect } from "@/components/AnimeStatusSelect";
 
 interface DetailsWindowProps extends ComponentProps<"div"> {
-    animeId?: string
+    animeId?: string;
 }
 
-export const DetailsWindow = ({ className, animeId,  ...props }: DetailsWindowProps) => {
+export const DetailsWindow = ({
+    className,
+    animeId,
+    ...props
+}: DetailsWindowProps) => {
     const form = useForm<Anime>({
         defaultValues: {
             name: "",
@@ -33,94 +37,93 @@ export const DetailsWindow = ({ className, animeId,  ...props }: DetailsWindowPr
             link: "",
             status: AnimeStatus.None,
         },
-    })
+    });
 
     useEffect(() => {
         const loadAnimeData = async () => {
             if (animeId) {
                 try {
-                    const animeData = await animeApi.get(animeId)
+                    const animeData = await animeApi.get(animeId);
                     if (animeData) {
                         // Преобразуем AnimeWithId в Anime для формы
-                        const { id, ...animeWithoutId } = animeData
-                        form.reset(animeWithoutId)
+                        const { id, ...animeWithoutId } = animeData;
+                        form.reset(animeWithoutId);
                     }
                 } catch (error) {
-                    console.error("Ошибка при загрузке аниме:", error)
+                    console.error("Ошибка при загрузке аниме:", error);
                     // Можно показать ошибку пользователю
-                    alert("Не удалось загрузить данные аниме")
+                    alert("Не удалось загрузить данные аниме");
                 }
             }
-        }
+        };
 
-        loadAnimeData()
-    }, [animeId, form])
+        loadAnimeData();
+    }, [animeId, form]);
 
-   const onSubmit = async (data: Anime) => {
-    try {
-        console.log("Submitting anime data:", data);
-        
-        if (animeId) {
-            // Режим редактирования
-            const animeWithId: AnimeWithId = {
-                id: animeId,
-                ...data
+    const onSubmit = async (data: Anime) => {
+        try {
+            console.log("Submitting anime data:", data);
+
+            if (animeId) {
+                // Режим редактирования
+                const animeWithId: AnimeWithId = {
+                    id: animeId,
+                    ...data,
+                };
+                console.log("Updating anime:", animeWithId);
+
+                const updated = await animeApi.update(animeWithId);
+                console.log("Update successful:", updated);
+
+                alert("Аниме успешно обновлено!");
+            } else {
+                // Режим создания
+                console.log("Creating new anime with data:", data);
+
+                const newAnime = await animeApi.create(
+                    data.name,
+                    data.score,
+                    data.review,
+                    data.link,
+                    data.status
+                );
+
+                console.log("Create successful, new ID:", newAnime.id);
+
+                alert("Аниме успешно добавлено!");
+
+                // Очистить форму после успешного создания
+                form.reset({
+                    name: "",
+                    score: 0,
+                    review: "",
+                    link: "",
+                    status: AnimeStatus.None,
+                });
             }
-            console.log("Updating anime:", animeWithId);
-            
-            const updated = await animeApi.update(animeWithId)
-            console.log("Update successful:", updated);
-            
-            alert("Аниме успешно обновлено!")
-        } else {
-            // Режим создания
-            console.log("Creating new anime with data:", data);
-            
-            const newAnime = await animeApi.create(
-                data.name,
-                data.score,
-                data.review,
-                data.link,
-                data.status
-            )
-            
-            console.log("Create successful, new ID:", newAnime.id);
-            
-            alert("Аниме успешно добавлено!")
-            
-            // Очистить форму после успешного создания
-            form.reset({
-                name: "",
-                score: 0,
-                review: "",
-                link: "",
-                status: AnimeStatus.None,
-            })
-        }
-        
-    } catch (error) {
-        console.error("Ошибка при сохранении аниме:", error);
-        console.error("Тип ошибки:", typeof error);
-        console.error("Полный объект ошибки:", error);
-        
-        // Попробуем получить больше информации об ошибке
-        let errorMessage = "Не удалось сохранить аниме.";
-        
-        if (error instanceof Error) {
-            errorMessage += ` Ошибка: ${error.message}`;
-        } else if (typeof error === 'string') {
-            errorMessage += ` Ошибка: ${error}`;
-        } else if (error && typeof error === 'object') {
-            try {
-                errorMessage += ` Ошибка: ${JSON.stringify(error)}`;
-            } catch {
-                errorMessage += ` Неизвестная ошибка: ${String(error)}`;
+        } catch (error) {
+            console.error("Ошибка при сохранении аниме:", error);
+            console.error("Тип ошибки:", typeof error);
+            console.error("Полный объект ошибки:", error);
+
+            // Попробуем получить больше информации об ошибке
+            let errorMessage = "Не удалось сохранить аниме.";
+
+            if (error instanceof Error) {
+                errorMessage += ` Ошибка: ${error.message}`;
+            } else if (typeof error === "string") {
+                errorMessage += ` Ошибка: ${error}`;
+            } else if (error && typeof error === "object") {
+                try {
+                    errorMessage += ` Ошибка: ${JSON.stringify(error)}`;
+                } catch {
+                    errorMessage += ` Неизвестная ошибка: ${String(error)}`;
+                }
             }
+
+            alert(errorMessage);
         }
-        
-        alert(errorMessage);
-    }
-}
+    };
 
     return (
         <div
@@ -129,7 +132,10 @@ export const DetailsWindow = ({ className, animeId,  ...props }: DetailsWindowPr
         >
             <div className="flex-1">
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <form
+                        onSubmit={form.handleSubmit(onSubmit)}
+                        className="space-y-4"
+                    >
                         <FormField
                             control={form.control}
                             name="name"
@@ -137,7 +143,10 @@ export const DetailsWindow = ({ className, animeId,  ...props }: DetailsWindowPr
                                 <FormItem>
                                     <FormLabel>Название</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Введите название аниме" {...field} />
+                                        <Input
+                                            placeholder="Введите название аниме"
+                                            {...field}
+                                        />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -185,7 +194,10 @@ export const DetailsWindow = ({ className, animeId,  ...props }: DetailsWindowPr
                                 <FormItem>
                                     <FormLabel>Ссылка</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="https://..." {...field} />
+                                        <Input
+                                            placeholder="https://..."
+                                            {...field}
+                                        />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -199,7 +211,10 @@ export const DetailsWindow = ({ className, animeId,  ...props }: DetailsWindowPr
                                 <FormItem>
                                     <FormLabel>Отзыв</FormLabel>
                                     <FormControl>
-                                        <Textarea placeholder="Напишите свой отзыв..." {...field} />
+                                        <Textarea
+                                            placeholder="Напишите свой отзыв..."
+                                            {...field}
+                                        />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -217,7 +232,7 @@ export const DetailsWindow = ({ className, animeId,  ...props }: DetailsWindowPr
                 Изображение (в разработке)
             </div>
         </div>
-    )
-}
+    );
+};
 
-export default DetailsWindow
+export default DetailsWindow;

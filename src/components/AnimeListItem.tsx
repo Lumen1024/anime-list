@@ -1,26 +1,26 @@
-import { AnimeStatusIcon } from "@/components/AnimeStatusIcon"
-import { AnimeStatusSelect } from "@/components/AnimeStatusSelect"
-import { ScoreSelect } from "@/components/ScoreSelect"
-import type { AnimeWithId } from "@/api/anime"
-import type { AnimeStatus } from "@/model/AnimeStatus"
-import { cn } from "@/lib/utils"
-import type { ComponentProps } from "react"
-import { useState } from "react"
+import { AnimeStatusIcon } from "@/components/AnimeStatusIcon";
+import { AnimeStatusSelect } from "@/components/AnimeStatusSelect";
+import { ScoreSelect } from "@/components/ScoreSelect";
+import type { AnimeWithId } from "@/api/anime";
+import type { AnimeStatus } from "@/model/AnimeStatus";
+import { cn } from "@/lib/utils";
+import type { ComponentProps } from "react";
+import { useState } from "react";
 import {
     ContextMenu,
     ContextMenuContent,
     ContextMenuItem,
     ContextMenuTrigger,
-} from "@/components/ui/context-menu"
-import { Trash2 } from "lucide-react"
-import { Button } from "@/components/ui/button"
+} from "@/components/ui/context-menu";
+import { Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface AnimeListItemProps extends ComponentProps<"div"> {
-    anime: AnimeWithId
-    onEdit?: (id: string) => void
-    onDelete?: (id: string) => void
-    onScoreChange?: (id: string, score: number) => void
-    onStatusChange?: (id: string, status: AnimeStatus) => void
+    anime: AnimeWithId;
+    onEdit?: (id: string) => void;
+    onDelete?: (id: string) => void;
+    onScoreChange?: (id: string, score: number) => void;
+    onStatusChange?: (id: string, status: AnimeStatus) => void;
 }
 
 export const AnimeListItem = ({
@@ -32,20 +32,20 @@ export const AnimeListItem = ({
     className,
     ...props
 }: AnimeListItemProps) => {
-    const [isStatusSelectOpen, setIsStatusSelectOpen] = useState(false)
+    const [isStatusSelectOpen, setIsStatusSelectOpen] = useState(false);
 
     const handleStatusChange = (status: AnimeStatus) => {
         if (onStatusChange) {
-            onStatusChange(anime.id, status)
+            onStatusChange(anime.id, status);
         }
-        setIsStatusSelectOpen(false)
-    }
+        setIsStatusSelectOpen(false);
+    };
 
     const handleScoreChange = (score: number) => {
         if (onScoreChange) {
-            onScoreChange(anime.id, score)
+            onScoreChange(anime.id, score);
         }
-    }
+    };
 
     return (
         <ContextMenu>
@@ -72,8 +72,7 @@ export const AnimeListItem = ({
                                 <AnimeStatusIcon status={anime.status} />
                             </Button>
                         )}
-                        <div
-                            onClick={() => onEdit?.(anime.id)}                        >
+                        <div onClick={() => onEdit?.(anime.id)}>
                             {anime.name}
                         </div>
                     </div>
@@ -98,5 +97,5 @@ export const AnimeListItem = ({
                 )}
             </ContextMenuContent>
         </ContextMenu>
-    )
-}
+    );
+};
