@@ -20,8 +20,8 @@
       {
         "label": "details",
         "title": "Детали аниме",
-        "width": 600,
-        "height": 400,
+        "width": 800,
+        "height": 600,
         "visible": false,
         "center": true
       }
