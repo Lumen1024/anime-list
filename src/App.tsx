@@ -1,9 +1,9 @@
 import "@/App.css"
 import { AnimeListItem } from "@/components/AnimeListItem"
 import { SearchBar } from "@/components/SearchBar"
-import { Filter, Ghost, Plus } from "lucide-react"
+import { Filter, Plus } from "lucide-react"
 import { invoke } from "@tauri-apps/api/core"
-import { animeApi, mockAnimeList, type AnimeWithId } from "@/api/anime"
+import { animeApi, type AnimeWithId } from "@/api/anime"
 import { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 
