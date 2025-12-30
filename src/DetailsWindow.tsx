@@ -2,6 +2,8 @@ import "@/App.css"
 import { cn } from "@/lib/utils"
 import { useForm } from "react-hook-form"
 import type { ComponentProps } from "react"
+import { useEffect } from "react"
+import {animeApi, type AnimeWithId} from "@/api/anime"
 import type { Anime } from "@/model/Anime"
 import { AnimeStatus } from "@/model/AnimeStatus"
 import { Button } from "@/components/ui/button"
@@ -22,7 +24,7 @@ interface DetailsWindowProps extends ComponentProps<"div"> {
     animeId?: string
 }
 
-export const DetailsWindow = ({ className, animeId, ...props }: DetailsWindowProps) => {
+export const DetailsWindow = ({ className, animeId,  ...props }: DetailsWindowProps) => {
     const form = useForm<Anime>({
         defaultValues: {
             name: "",
@@ -33,9 +35,92 @@ export const DetailsWindow = ({ className, animeId, ...props }: DetailsWindowPro
         },
     })
 
-    const onSubmit = (data: Anime) => {
-        console.log(data)
+    useEffect(() => {
+        const loadAnimeData = async () => {
+            if (animeId) {
+                try {
+                    const animeData = await animeApi.get(animeId)
+                    if (animeData) {
+                        // Преобразуем AnimeWithId в Anime для формы
+                        const { id, ...animeWithoutId } = animeData
+                        form.reset(animeWithoutId)
+                    }
+                } catch (error) {
+                    console.error("Ошибка при загрузке аниме:", error)
+                    // Можно показать ошибку пользователю
+                    alert("Не удалось загрузить данные аниме")
+                }
+            }
+        }
+
+        loadAnimeData()
+    }, [animeId, form])
+
+   const onSubmit = async (data: Anime) => {
+    try {
+        console.log("Submitting anime data:", data);
+        
+        if (animeId) {
+            // Режим редактирования
+            const animeWithId: AnimeWithId = {
+                id: animeId,
+                ...data
+            }
+            console.log("Updating anime:", animeWithId);
+            
+            const updated = await animeApi.update(animeWithId)
+            console.log("Update successful:", updated);
+            
+            alert("Аниме успешно обновлено!")
+        } else {
+            // Режим создания
+            console.log("Creating new anime with data:", data);
+            
+            const newAnime = await animeApi.create(
+                data.name,
+                data.score,
+                data.review,
+                data.link,
+                data.status
+            )
+            
+            console.log("Create successful, new ID:", newAnime.id);
+            
+            alert("Аниме успешно добавлено!")
+            
+            // Очистить форму после успешного создания
+            form.reset({
+                name: "",
+                score: 0,
+                review: "",
+                link: "",
+                status: AnimeStatus.None,
+            })
+        }
+        
+    } catch (error) {
+        console.error("Ошибка при сохранении аниме:", error);
+        console.error("Тип ошибки:", typeof error);
+        console.error("Полный объект ошибки:", error);
+        
+        // Попробуем получить больше информации об ошибке
+        let errorMessage = "Не удалось сохранить аниме.";
+        
+        if (error instanceof Error) {
+            errorMessage += ` Ошибка: ${error.message}`;
+        } else if (typeof error === 'string') {
+            errorMessage += ` Ошибка: ${error}`;
+        } else if (error && typeof error === 'object') {
+            try {
+                errorMessage += ` Ошибка: ${JSON.stringify(error)}`;
+            } catch {
+                errorMessage += ` Неизвестная ошибка: ${String(error)}`;
+            }
+        }
+        
+        alert(errorMessage);
     }
+}
 
     return (
         <div
