@@ -155,6 +155,7 @@ export const DetailsWindow = ({
     return (
         <div
             className={cn("flex w-screen h-screen p-4 gap-4", className)}
+            onContextMenu={(e) => e.preventDefault()}
             {...props}
         >
             <div className="flex-1">
