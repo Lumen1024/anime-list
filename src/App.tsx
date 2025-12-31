@@ -206,7 +206,7 @@ function App() {
     );
 
     return (
-        <div className="flex flex-col w-screen h-screen p-4 gap-4">
+        <div className="flex flex-col w-screen h-screen p-4 gap-4" onContextMenu={(e) => e.preventDefault()}>
             <div className="flex w-full gap-2">
                 <SearchBar
                     className="flex-1"
