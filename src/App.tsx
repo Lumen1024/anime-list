@@ -2,6 +2,7 @@ import "@/App.css";
 import { AnimeListItem } from "@/components/AnimeListItem";
 import { SearchBar } from "@/components/SearchBar";
 import { FilterMenu, type FilterStatus } from "@/components/FilterMenu";
+import { ExportImportButtons } from "@/components/ExportImportButtons";
 import { Plus } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
@@ -217,6 +218,7 @@ function App() {
                     value={filterStatus}
                     onChange={setFilterStatus}
                 />
+                <ExportImportButtons onImportComplete={loadAnimes} />
                 <Button
                     size={"icon"}
                     variant={"outline"}
